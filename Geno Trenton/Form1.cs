@@ -20,17 +20,21 @@ namespace Geno_Trenton
         private int enteredCombos;
         private double totalCombos;
 
-        DataTable data;
-        DataRow row;
+        private DataTable data;
+        private DataRow row;
+
+        private int[] phenoTypeRatios;
+        private bool[] phenotypeRatioBools;
 
         public Form1()
         {
             data = new DataTable();
             InitializeComponent();
         }
+
         private void button1_Click(object sender, EventArgs e)
         {
-            label1.Text = "";
+            label1.Text = "Phenotype Ratio: ";
             if (textBox2.Text.Length != textBox3.Text.Length)
             {
                 label1.Text = "Please Enter An Equal Amount of Alleles For Each Parent";
@@ -42,19 +46,19 @@ namespace Geno_Trenton
                 possibilitiesMom = new String[1];
                 enteredCombos = 0;
 
-                String temp = textBox2.Text;
-                enteredNum = temp.Length / 2;
+                String dadText = textBox2.Text;
+                enteredNum = dadText.Length / 2;
                 String[,] genoDad = new String[enteredNum, 2];
-                for (int seperation = 0; seperation < temp.Length; seperation++)
+                for (int seperation = 0; seperation < dadText.Length; seperation++)
                 {
-                    genoDad[seperation / 2, seperation % 2] = temp.Substring(seperation, 1);
+                    genoDad[seperation / 2, seperation % 2] = dadText.Substring(seperation, 1);
                 }
 
-                String temp2 = textBox3.Text;
+                String momText = textBox3.Text;
                 String[,] genoMom = new String[enteredNum, 2];
-                for (int seperation = 0; seperation < temp2.Length; seperation++)
+                for (int seperation = 0; seperation < momText.Length; seperation++)
                 {
-                    genoMom[seperation / 2, seperation % 2] = temp2.Substring(seperation, 1);
+                    genoMom[seperation / 2, seperation % 2] = momText.Substring(seperation, 1);
                 }
 
                 totalCombos = Math.Pow(2, enteredNum);
@@ -69,26 +73,20 @@ namespace Geno_Trenton
                 textBox4.Text = addedWord;
                 addedWord = "";
 
-                //DataTable data = new DataTable();
+
                 data.Columns.Clear();
                 data.Rows.Clear();
                 data.Clear();
 
+                phenoTypeRatios = new int[(int)Math.Pow(2,momText.Length/2)];
+                phenotypeRatioBools = new bool[(int)Math.Pow(2, momText.Length / 2)];
 
                 data.Columns.Add(" ", typeof(String));
                 for (int fatherPossibilities = 0; fatherPossibilities < possibilitiesDad.Length; fatherPossibilities++)
                 {
-                    try
-                    {
-                        //data.Columns.Add(possibilitiesDad[fatherPossibilities], typeof(String));
-                        DataColumn dc = new DataColumn();
-                        dc.DataType = typeof(String);
-                        data.Columns.Add(dc);
-                    }
-                    catch (DuplicateNameException ex)
-                    {
-
-                    }
+                    DataColumn dc = new DataColumn();
+                    dc.DataType = typeof(String);
+                    data.Columns.Add(dc);
                 }
                 row = data.NewRow();
                 row[" "] = "";
@@ -97,7 +95,7 @@ namespace Geno_Trenton
                     row[fatherPossibilities + 1] = possibilitiesDad[fatherPossibilities];
                 }
                 data.Rows.Add(row);
-                label1.Text = "";
+                label1.Text = "Phenotype Ratio: ";
                 for (int MP = 0; MP < possibilitiesMom.Length; MP++)
                 {
                     row = data.NewRow();
@@ -107,19 +105,65 @@ namespace Geno_Trenton
                         String temp3 = "";
                         for (int i = 0; i < enteredNum; i++)
                         {
-                            temp3 += possibilitiesDad[fatherPossibilities].Substring(i, 1);
-                            temp3 += possibilitiesMom[MP].Substring(i, 1);
+                            if (possibilitiesDad[fatherPossibilities].Substring(i, 1).CompareTo(possibilitiesMom[MP].Substring(i, 1)) >= 0)
+                            {
+                                temp3 += possibilitiesDad[fatherPossibilities].Substring(i, 1);
+                                temp3 += possibilitiesMom[MP].Substring(i, 1);
+                            }
+                            else
+                            {
+                                temp3 += possibilitiesMom[MP].Substring(i, 1);
+                                temp3 += possibilitiesDad[fatherPossibilities].Substring(i, 1);
+                            }
                         }
-                        //label1.Text += temp3;
-                        //textBox4.Text += possibilitiesDad.Length;
-                        //label1.Text += possibilitiesDad[fatherPossibilities];
-                        //row[possibilitiesDad[fatherPossibilities]] = label1.Text;
-                        row[fatherPossibilities + 1] = temp3;
+                        for (int phenotypes = 0; phenotypes < phenoTypeRatios.Length; phenotypes++)
+                        {
+                            phenotypeRatioBools[phenotypes] = true;
+                        }
+                        for (int phenotypes = 0; phenotypes < temp3.Length/2; phenotypes++)
+                        {
+                            if (temp3.Substring(phenotypes * 2, 1).CompareTo(temp3.Substring(phenotypes * 2, 1).ToLower()) > 0)
+                            {
+                                for (int i = 0; i < phenoTypeRatios.Length; i++)
+                                {
+                                    if ((int)((i) / (Math.Pow(2, temp3.Length / 2 - 1 - phenotypes)))%2 == 1)
+                                    {
+                                        phenotypeRatioBools[i] = false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 0; i < phenoTypeRatios.Length; i++)
+                                {
+                                    if ((int)((i) / (Math.Pow(2, temp3.Length / 2 - 1 - phenotypes))) % 2 == 0)
+                                    {
+                                        phenotypeRatioBools[i] = false;
+                                    }
+                                }
+                            }
+                        }
+
+                        for (int phenotypes = 0; phenotypes < phenoTypeRatios.Length; phenotypes++)
+                        {
+                            if (phenotypeRatioBools[phenotypes])
+                            {
+                                phenoTypeRatios[phenotypes]++;
+                            }
+                        }
+                            row[fatherPossibilities + 1] = temp3;
                     }
                     data.Rows.Add(row);
                 }
                 dataGridView1.DataSource = data;
-                //data.Rows.Add("Father Possibilities", typeof(String));
+                for (int c = 0; c < phenoTypeRatios.Length; c++)
+                { 
+                    label1.Text += phenoTypeRatios[c].ToString();
+                    if (c != phenoTypeRatios.Length-1)
+                    {
+                        label1.Text += " : ";
+                    }
+                }
             }
         }
 
